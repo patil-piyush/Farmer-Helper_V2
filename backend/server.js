@@ -18,6 +18,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/crop', auth, require('./routes/cropRoutes'));
+app.use('/api/disease', auth, require('./routes/diseaseRoutes'));
+app.use('/api/weather', auth, require('./routes/weatherRoutes'));
+app.use('/api/market', auth, require('./routes/marketRoutes'));
 
 // Connect to MongoDB
 connectDB();
