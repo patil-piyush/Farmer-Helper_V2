@@ -1,3 +1,76 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global improvements for layout and typography */
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* gentle card lift transition used by feature/choose/feedback cards */
+.card-interactive {
+	/* snappier hover: shorter duration but still smooth */
+	transition: transform .22s cubic-bezier(.22,.9,.35,1), box-shadow .22s cubic-bezier(.22,.9,.35,1);
+	will-change: transform, box-shadow;
+	backface-visibility: hidden;
+}
+
+.card-interactive:hover {
+	/* subtler lift and softer shadow - slightly larger but smoother */
+	transform: translateY(-8px) translateZ(0);
+	box-shadow: 0 26px 56px rgba(2,6,23,0.11);
+}
+
+/* Reveal on scroll helpers */
+.reveal {
+	/* initial (off-screen) state: slightly lower and a hair smaller */
+	opacity: 0;
+	transform: translateY(10px) scale(.997);
+	will-change: transform, opacity;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+.reveal.visible {
+	/* use a keyframe animation for a PowerPoint-like "push from bottom" feel */
+	animation: slideUpFromBottom 1.3s cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes slideUpFromBottom {
+	0% {
+		opacity: 0;
+		transform: translateY(14px) scale(.996);
+	}
+	60% {
+		opacity: 1;
+		transform: translateY(-2px) scale(1.001);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.reveal-inline-delay {
+	will-change: transform, opacity;
+}
+
+/* small utility to stagger reveals using inline style animationDelay */
+.reveal-inline-delay {
+	will-change: transform, opacity;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.card-interactive,
+	.reveal,
+	.reveal.visible {
+		transition: none !important;
+		transform: none !important;
+		opacity: 1 !important;
+	}
+}
