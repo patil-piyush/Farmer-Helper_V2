@@ -1,10 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/db');
+const {protect} = require('./middlewares/authMiddleware');
 
 // import routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const cropRoutes = require('./routes/cropRoutes');
+// const diseaseRoutes = require('./routes/diseaseRoutes');
+// const marketRoutes = require('./routes/marketRoutes');
+const weatherRoutes = require('./routes/weatherRoutes');
 
 
 const app = express();
@@ -18,10 +23,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/crop', auth, require('./routes/cropRoutes'));
-app.use('/api/disease', auth, require('./routes/diseaseRoutes'));
-app.use('/api/weather', auth, require('./routes/weatherRoutes'));
-app.use('/api/market', auth, require('./routes/marketRoutes'));
+app.use('/api/weather', protect, weatherRoutes);
+app.use('/api/crop', protect, cropRoutes);
+// app.use('/api/disease', auth, diseaseRoutes);
+// app.use('/api/market', auth, marketRoutes);
 
 // Connect to MongoDB
 connectDB();
