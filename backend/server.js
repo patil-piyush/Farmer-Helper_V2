@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/db');
 const {protect} = require('./middlewares/authMiddleware');
-
+const cors = require('cors');
 // import routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -19,6 +19,10 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(cors({
+  origin: 'http://localhost:5173', // your Vite dev server
+  credentials: true
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidbar from "./Sidbar";
 import Overview from "./Overview";
@@ -12,19 +12,27 @@ export default function Dashboard() {
   const [active, setActive] = useState("overview");
   const navigate = useNavigate();
 
+  // 🚫 Redirect to login if not authenticated
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // or "auth" depending on your setup
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
   function handleSelect(key) {
-    // handle logout specially
+    // 🧹 Handle logout
     if (key === "logout") {
-      // clear any stored auth (adjust key names as needed)
       try {
-        localStorage.removeItem("token");
-      } catch (e) {}
-      // navigate back to landing page
-      navigate("/");
+        localStorage.removeItem("token"); // clear token
+      } catch (e) {
+        console.error("Error clearing token:", e);
+      }
+      navigate("/"); // redirect to landing page
       return;
     }
 
-    // basic handler for switching panels
+    // Switch active section
     setActive(key);
     console.log("Sidebar selected:", key);
   }
@@ -42,7 +50,6 @@ export default function Dashboard() {
         )}
 
         <section>
-          {/* Simple content area that shows which panel is active. Replace with your real panels. */}
           {active === "overview" ? (
             <Overview />
           ) : active === "crop-selection" ? (

@@ -1,7 +1,35 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import backendUrl from "../backend.js";
 
 export default function Login() {
+  const navigate = useNavigate();
+
+  // ✅ State for form fields
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // ✅ Handle form submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${backendUrl}/api/auth/login`, {
+        email,
+        password,
+      }); // proxy will handle backend URL
+
+      // ✅ Save token in localStorage
+      localStorage.setItem("token", res.data.token);
+
+      // ✅ Redirect to dashboard
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login failed:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Invalid credentials");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-md p-8">
@@ -10,7 +38,8 @@ export default function Login() {
           <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
         </div>
 
-        <form className="mt-8 space-y-4">
+        {/* ✅ Added onSubmit and controlled inputs */}
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="sr-only">
               Email address
@@ -21,6 +50,8 @@ export default function Login() {
               type="email"
               required
               placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -35,6 +66,8 @@ export default function Login() {
               type="password"
               required
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
