@@ -21,6 +21,12 @@ export default function Login() {
 
       // ✅ Save token in localStorage
       localStorage.setItem("token", res.data.token);
+      // Save basic user info for UI (name, location)
+      const user = {
+        name: res.data.fullname || res.data.name || res.data.email || "",
+        location: res.data.location || "",
+      };
+      localStorage.setItem("user", JSON.stringify(user));
 
       // ✅ Redirect to dashboard
       navigate("/dashboard");

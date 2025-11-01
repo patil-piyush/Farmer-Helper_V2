@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import backendUrl from "../backend.js";
 
 const menuItems = [
   { key: "overview", label: "Overview" },
@@ -14,8 +16,32 @@ export default function Sidebar({ active = "overview", onSelect = () => {} }) {
   const [user, setUser] = useState({ name: "MortalX", location: "Pune" });
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) setUser(storedUser);
+    const stored = localStorage.getItem("user");
+    const storedUser = stored ? JSON.parse(stored) : null;
+    if (storedUser) {
+      setUser(storedUser);
+      return;
+    }
+
+    // If no user in storage, try fetching profile from backend using token
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    axios
+      .get(`${backendUrl}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const u = {
+          name: res.data.fullname || res.data.name || res.data.email || "",
+          location: res.data.location || "",
+        };
+        setUser(u);
+        localStorage.setItem("user", JSON.stringify(u));
+      })
+      .catch(() => {
+        // ignore — user will see defaults
+      });
   }, []);
 
   return (
@@ -53,12 +79,10 @@ export default function Sidebar({ active = "overview", onSelect = () => {} }) {
                   />
                   <span className="truncate">{item.label}</span>
                 </button>
-                
               </li>
             );
           })}
         </ul>
-        
       </nav>
     </aside>
   );

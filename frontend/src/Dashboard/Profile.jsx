@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import backendUrl from "../backend.js";
 
 export default function Profile() {
   const [profile, setProfile] = useState({
-    fullName: "MortalX",
-    email: "rohanpatil712002@gmail.com",
-    location: "Pune",
-    farmSize: "1",
+    fullName: "",
+    email: "",
+    location: "",
+    farmSize: "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -14,15 +16,57 @@ export default function Profile() {
     confirm: "",
   });
 
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Please log in first");
+          return;
+        }
+
+        const res = await axios.get(`${backendUrl}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setProfile({
+          fullName: res.data.fullName || "",
+          email: res.data.email || "",
+          location: res.data.location || "",
+          farmSize: res.data.farmSize || "",
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Failed to fetch user profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   function handleProfileChange(e) {
     const { name, value } = e.target;
     setProfile((p) => ({ ...p, [name]: value }));
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault();
-    // TODO: wire up to backend
-    alert("Profile saved (mock)");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(`${backendUrl}/api/user/profile`, profile, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Profile updated successfully!");
+      setProfile(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update profile");
+    }
   }
 
   function handlePasswordChange(e) {
@@ -30,20 +74,39 @@ export default function Profile() {
     setPasswords((p) => ({ ...p, [name]: value }));
   }
 
-  function handleChangePassword(e) {
+  async function handleChangePassword(e) {
     e.preventDefault();
     if (passwords.next !== passwords.confirm)
       return alert("New passwords do not match");
-    // TODO: call backend to change password
-    alert("Password changed (mock)");
-    setPasswords({ current: "", next: "", confirm: "" });
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${backendUrl}/api/user/change-password`,
+        {
+          currentPassword: passwords.current,
+          newPassword: passwords.next,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      alert("Password changed successfully!");
+      setPasswords({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to change password");
+    }
   }
+
+  if (loading) return <div>Loading profile...</div>;
 
   return (
     <div className="max-w-3xl">
       <div className="bg-white rounded shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
 
+        {/* PERSONAL INFO */}
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <h3 className="font-medium mb-2">Personal Information</h3>
@@ -92,6 +155,7 @@ export default function Profile() {
           </div>
         </form>
 
+        {/* PASSWORD SECTION */}
         <div className="mt-6">
           <h3 className="font-medium mb-2">Change Password</h3>
           <form onSubmit={handleChangePassword} className="space-y-3">

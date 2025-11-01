@@ -71,6 +71,7 @@ const loginUser = async (req, res) => {
             name: user.name,
             email: user.email,
             profilePicture: user.profilePicture,
+            location: user.location,
             token,
         });
     } catch (error) {

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import {useNavigate } from "react-router-dom";
-import "../backend.js";
+import { useNavigate } from "react-router-dom";
+import backendUrl from "../backend.js";
 
 export default function SignUp() {
   const [form, setForm] = useState({
@@ -43,6 +43,13 @@ export default function SignUp() {
       });
 
       navigate("/dashboard"); // 👈 redirect after success
+      // store token and user info for sidebar
+      if (res?.data?.token) localStorage.setItem("token", res.data.token);
+      const user = {
+        name: res.data.fullname || res.data.name || res.data.email || "",
+        location: res.data.location || "",
+      };
+      localStorage.setItem("user", JSON.stringify(user));
       setSuccess("Registration successful!");
       setForm({
         fullname: "",
