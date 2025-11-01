@@ -35,34 +35,31 @@ export default function Hero({
                 />
               </svg>
               <span className="font-semibold text-green-600">
-                <Link to="/" className="text-slate-700 hover:text-slate-900">
+                <a href="/" className="text-slate-700 hover:text-slate-900">
                   Farmer Helper
-                </Link>
+                </a>
               </span>
             </div>
 
             <div className="hidden md:flex items-center gap-6 text-sm">
-              <Link
-                to="#features"
+              <a
+                href="#features"
                 className="text-slate-700 hover:text-slate-900"
               >
                 Features
-              </Link>
-              <Link
-                to="#testimonials"
+              </a>
+              <a
+                href="#testimonials"
                 className="text-slate-700 hover:text-slate-900"
               >
                 Testimonials
-              </Link>
-              <Link to="#login" className="text-slate-700 hover:text-slate-900">
+              </a>
+              <a href="/login" className="text-slate-700 hover:text-slate-900">
                 Login
-              </Link>
-              <Link
-                to="#register"
-                className="text-slate-700 hover:text-slate-900"
-              >
+              </a>
+              <a href="/signup" className="text-slate-700 hover:text-slate-900">
                 Register
-              </Link>
+              </a>
             </div>
           </div>
         </div>
