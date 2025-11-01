@@ -1,9 +1,4 @@
-import React from "react";
-
-// Sidebar component for the dashboard
-// Props:
-// - active: string (key of active menu)
-// - onSelect: function(menuKey) called when an item is clicked
+import React, { useEffect, useState } from "react";
 
 const menuItems = [
   { key: "overview", label: "Overview" },
@@ -15,16 +10,23 @@ const menuItems = [
   { key: "logout", label: "Logout" },
 ];
 
-export default function Sidbar({ active = "overview", onSelect = () => {} }) {
+export default function Sidebar({ active = "overview", onSelect = () => {} }) {
+  const [user, setUser] = useState({ name: "MortalX", location: "Pune" });
+
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) setUser(storedUser);
+  }, []);
+
   return (
     <aside className="w-64 bg-gray-800 text-gray-100 min-h-screen">
       <div className="p-4 border-b border-gray-700 flex items-center gap-3">
         <div className="rounded-full bg-gray-600 w-10 h-10 flex items-center justify-center font-bold">
-          M
+          {user.name?.charAt(0)?.toUpperCase() || "M"}
         </div>
         <div className="text-sm">
-          <div className="font-semibold">MortalX</div>
-          <div className="text-xs text-gray-400">Pune</div>
+          <div className="font-semibold">{user.name}</div>
+          <div className="text-xs text-gray-400">{user.location}</div>
         </div>
       </div>
 
@@ -42,7 +44,6 @@ export default function Sidbar({ active = "overview", onSelect = () => {} }) {
                       : "text-gray-200 hover:bg-gray-700 hover:text-white"
                   }`}
                 >
-                  {/* simple indicator */}
                   <span
                     className={`inline-block w-2 h-2 rounded-full ${
                       isActive
@@ -52,10 +53,12 @@ export default function Sidbar({ active = "overview", onSelect = () => {} }) {
                   />
                   <span className="truncate">{item.label}</span>
                 </button>
+                
               </li>
             );
           })}
         </ul>
+        
       </nav>
     </aside>
   );
