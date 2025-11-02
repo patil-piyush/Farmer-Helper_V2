@@ -10,7 +10,7 @@ import Profile from "./Profile";
 
 export default function Dashboard() {
   const [active, setActive] = useState("overview");
-  const [name, setName] = useState("MortalX");
+  const [name, setName] = useState("");
   const navigate = useNavigate();
 
   // 🚫 Redirect to login if not authenticated

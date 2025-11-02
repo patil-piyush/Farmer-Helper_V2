@@ -105,10 +105,16 @@ export default function Profile() {
             ? String(updated.farmsize)
             : profile.farmSize,
       });
-      // Update shared local storage so other components can read the latest name/location
+      // Update shared local storage so other components can read the latest name/location/farmsize
       const userForStorage = {
         name: updated.fullname || profile.fullName,
         location: updated.location || profile.location,
+        farmsize:
+          typeof updated.farmsize !== "undefined"
+            ? updated.farmsize
+            : profile.farmSize
+            ? Number(profile.farmSize)
+            : 0,
       };
       try {
         localStorage.setItem("user", JSON.stringify(userForStorage));
