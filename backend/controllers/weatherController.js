@@ -3,11 +3,12 @@ axios = require("axios");
 
 const getWeather = async (req, res) => {
     try {
-      const { location } = req.body; //will change if frontend change
-  
-      if (!location) {
-        return res.status(400).json({ error: "Location query parameter is required" });
-      }
+        // Accept location from query (GET requests) or body (POST)
+        const location = req.query?.location || req.body?.location;
+
+        if (!location) {
+          return res.status(400).json({ error: "Location is required (query or body)" });
+        }
   
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
   

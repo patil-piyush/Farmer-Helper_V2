@@ -16,6 +16,8 @@ export default function Profile() {
     confirm: "",
   });
 
+  const [emailError, setEmailError] = useState("");
+
   const [loading, setLoading] = useState(true);
 
   // Fetch user profile on mount
@@ -32,11 +34,12 @@ export default function Profile() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // Map backend fields (fullname, farmsize) to frontend state keys
         setProfile({
-          fullName: res.data.fullName || "",
+          fullName: res.data.fullname || "",
           email: res.data.email || "",
           location: res.data.location || "",
-          farmSize: res.data.farmSize || "",
+          farmSize: res.data.farmsize != null ? String(res.data.farmsize) : "",
         });
       } catch (err) {
         console.error(err);
@@ -52,20 +55,81 @@ export default function Profile() {
   function handleProfileChange(e) {
     const { name, value } = e.target;
     setProfile((p) => ({ ...p, [name]: value }));
+
+    // Validate email format on change
+    if (name === "email") {
+      if (!validateEmail(value))
+        setEmailError("Please enter a valid email address");
+      else setEmailError("");
+    }
+  }
+
+  function validateEmail(email) {
+    // Basic RFC 5322-ish email regex (reasonable client-side check)
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
   }
 
   async function handleSave(e) {
     e.preventDefault();
+    // final validation before sending
+    if (profile.email && !validateEmail(profile.email)) {
+      return alert("Please provide a valid email address before saving.");
+    }
+
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.put(`${backendUrl}/api/user/profile`, profile, {
+
+      // Map frontend keys to backend expected keys
+      const payload = {
+        fullname: profile.fullName,
+        email: profile.email,
+        location: profile.location,
+        farmsize: profile.farmSize ? Number(profile.farmSize) : undefined,
+      };
+
+      const res = await axios.put(`${backendUrl}/api/user/profile`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("Profile updated successfully!");
-      setProfile(res.data);
+
+      alert(res.data?.message || "Profile updated successfully!");
+
+      // Update local state from backend response (res.data.user)
+      const updated = res.data?.user || {};
+      setProfile({
+        fullName: updated.fullname || profile.fullName,
+        email: updated.email || profile.email,
+        location: updated.location || profile.location,
+        farmSize:
+          updated.farmsize != null
+            ? String(updated.farmsize)
+            : profile.farmSize,
+      });
+      // Update shared local storage so other components can read the latest name/location
+      const userForStorage = {
+        name: updated.fullname || profile.fullName,
+        location: updated.location || profile.location,
+      };
+      try {
+        localStorage.setItem("user", JSON.stringify(userForStorage));
+      } catch (e) {
+        // ignore storage errors
+      }
+
+      // Dispatch a custom event so other components (e.g. Sidebar) can update immediately
+      try {
+        window.dispatchEvent(
+          new CustomEvent("profileUpdated", { detail: userForStorage })
+        );
+      } catch (e) {
+        // older browsers may not support CustomEvent constructor
+        const evt = document.createEvent("CustomEvent");
+        evt.initCustomEvent("profileUpdated", true, true, userForStorage);
+        window.dispatchEvent(evt);
+      }
     } catch (err) {
       console.error(err);
-      alert("Failed to update profile");
+      alert(err.response?.data?.message || "Failed to update profile");
     }
   }
 
@@ -82,9 +146,9 @@ export default function Profile() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${backendUrl}/api/user/change-password`,
+        `${backendUrl}/api/user/password`,
         {
-          currentPassword: passwords.current,
+          oldPassword: passwords.current,
           newPassword: passwords.next,
         },
         {
@@ -123,12 +187,19 @@ export default function Profile() {
             <input
               name="email"
               value={profile.email}
-              readOnly
-              className="w-full bg-gray-100 border rounded px-3 py-2 mb-1"
+              onChange={handleProfileChange}
+              type="email"
+              className={`w-full border rounded px-3 py-2 mb-1 ${
+                emailError ? "border-red-500" : ""
+              }`}
             />
-            <div className="text-xs text-gray-500 mb-2">
-              Email cannot be changed
-            </div>
+            {emailError ? (
+              <div className="text-xs text-red-600 mb-2">{emailError}</div>
+            ) : (
+              <div className="text-xs text-gray-500 mb-2">
+                You can change your email
+              </div>
+            )}
 
             <label className="text-sm block mb-1">Location</label>
             <input
@@ -148,7 +219,10 @@ export default function Profile() {
 
             <button
               type="submit"
-              className="bg-blue-600 text-white rounded px-4 py-2"
+              disabled={!!emailError}
+              className={`bg-blue-600 text-white rounded px-4 py-2 ${
+                emailError ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               Save Changes
             </button>

@@ -1,6 +1,48 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import backendUrl from "../backend.js";
 
 export default function Overview() {
+  const [name, setName] = useState("MortalX");
+
+  useEffect(() => {
+    // First try localStorage
+    try {
+      const stored = localStorage.getItem("user");
+      const u = stored ? JSON.parse(stored) : null;
+      if (u && u.name) {
+        setName(u.name);
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Fallback: fetch profile from backend
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    axios
+      .get(`${backendUrl}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const n = res.data.fullname || res.data.name || res.data.email || "MortalX";
+        setName(n);
+        try {
+          localStorage.setItem("user", JSON.stringify({ name: n, location: res.data.location || "" }));
+        } catch (e) {}
+      })
+      .catch(() => {});
+
+    const handler = (e) => {
+      const detail = e?.detail;
+      if (detail && detail.name) setName(detail.name);
+    };
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, []);
+
   return (
     <div>
       {/* Top stat cards */}

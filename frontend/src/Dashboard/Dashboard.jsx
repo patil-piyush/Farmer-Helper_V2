@@ -10,6 +10,7 @@ import Profile from "./Profile";
 
 export default function Dashboard() {
   const [active, setActive] = useState("overview");
+  const [name, setName] = useState("MortalX");
   const navigate = useNavigate();
 
   // 🚫 Redirect to login if not authenticated
@@ -19,6 +20,24 @@ export default function Dashboard() {
       navigate("/login");
     }
   }, [navigate]);
+
+  // Read the user's name from localStorage (populated by login/profile components)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      const u = stored ? JSON.parse(stored) : null;
+      if (u && u.name) setName(u.name);
+    } catch (e) {
+      // ignore
+    }
+
+    const handler = (e) => {
+      const detail = e?.detail;
+      if (detail && detail.name) setName(detail.name);
+    };
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, []);
 
   function handleSelect(key) {
     // 🧹 Handle logout
@@ -44,7 +63,7 @@ export default function Dashboard() {
       <main className="flex-1 bg-gray-50 min-h-screen p-8">
         {active === "overview" && (
           <header className="mb-6">
-            <h1 className="text-2xl font-semibold">Welcome, MortalX!</h1>
+            <h1 className="text-2xl font-semibold">Welcome, {name}!</h1>
             <p className="text-gray-600">Here's your farming overview</p>
           </header>
         )}

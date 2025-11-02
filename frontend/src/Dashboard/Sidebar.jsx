@@ -44,8 +44,26 @@ export default function Sidebar({ active = "overview", onSelect = () => {} }) {
       });
   }, []);
 
+  // Listen for profile updates dispatched by Profile.jsx so the sidebar updates immediately
+  useEffect(() => {
+    const handler = (e) => {
+      const detail = e?.detail;
+      if (detail) {
+        setUser(detail);
+        try {
+          localStorage.setItem("user", JSON.stringify(detail));
+        } catch (err) {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, []);
+
   return (
-    <aside className="w-64 bg-gray-800 text-gray-100 min-h-screen">
+    <aside className="w-64 bg-gray-800 text-gray-100 min-h-screen flex flex-col">
       <div className="p-4 border-b border-gray-700 flex items-center gap-3">
         <div className="rounded-full bg-gray-600 w-10 h-10 flex items-center justify-center font-bold">
           {user.name?.charAt(0)?.toUpperCase() || "M"}
@@ -55,35 +73,57 @@ export default function Sidebar({ active = "overview", onSelect = () => {} }) {
           <div className="text-xs text-gray-400">{user.location}</div>
         </div>
       </div>
-
       <nav className="p-3">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const isActive = item.key === active;
-            return (
-              <li key={item.key}>
-                <button
-                  onClick={() => onSelect(item.key)}
-                  className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-md transition-colors duration-150 focus:outline-none ${
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-200 hover:bg-gray-700 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className={`inline-block w-2 h-2 rounded-full ${
+          {menuItems
+            .filter((it) => it.key !== "logout")
+            .map((item) => {
+              const isActive = item.key === active;
+              return (
+                <li key={item.key}>
+                  <button
+                    onClick={() => onSelect(item.key)}
+                    className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-md transition-colors duration-150 focus:outline-none ${
                       isActive
-                        ? "bg-white"
-                        : "bg-transparent border border-gray-600"
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-200 hover:bg-gray-700 hover:text-white"
                     }`}
-                  />
-                  <span className="truncate">{item.label}</span>
-                </button>
-              </li>
-            );
-          })}
+                  >
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${
+                        isActive
+                          ? "bg-white"
+                          : "bg-transparent border border-gray-600"
+                      }`}
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
         </ul>
       </nav>
+
+      {/* Logout at bottom */}
+      <div className="mt-auto p-3 border-t border-gray-700">
+        <button
+          onClick={() => onSelect("logout")}
+          className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-md transition-colors duration-150 focus:outline-none ${
+            active === "logout"
+              ? "bg-blue-600 text-white"
+              : "text-gray-200 hover:bg-gray-700 hover:text-white"
+          }`}
+        >
+          <span
+            className={`inline-block w-2 h-2 rounded-full ${
+              active === "logout"
+                ? "bg-white"
+                : "bg-transparent border border-gray-600"
+            }`}
+          />
+          <span className="truncate">Logout</span>
+        </button>
+      </div>
     </aside>
   );
 }
