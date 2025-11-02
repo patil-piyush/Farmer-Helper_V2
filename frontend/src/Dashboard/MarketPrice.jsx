@@ -114,6 +114,34 @@ export default function MarketPrice() {
 
       // res.data expected shape: { count, latestDate, records: [...] }
       setPrediction(res.data);
+      // record activity and persist so Overview can pick it up
+      try {
+        const title = `Market query: ${commodity || "All commodities"}`;
+        const subtitle = `${stateSel || ""}${
+          stateSel && districtSel ? ", " : ""
+        }${districtSel || ""}`;
+        const item = {
+          id: `${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          title,
+          subtitle,
+          timestamp: Date.now(),
+        };
+        try {
+          const raw = localStorage.getItem("recentActivities");
+          const arr = raw ? JSON.parse(raw) : [];
+          const next = [item, ...arr].slice(0, 10);
+          localStorage.setItem("recentActivities", JSON.stringify(next));
+        } catch (e) {}
+        try {
+          window.dispatchEvent(
+            new CustomEvent("activityAdded", { detail: item })
+          );
+        } catch (e) {
+          const evt = document.createEvent("CustomEvent");
+          evt.initCustomEvent("activityAdded", true, true, item);
+          window.dispatchEvent(evt);
+        }
+      } catch (e) {}
     } catch (err) {
       console.error("Market API error", err);
       setApiError(
@@ -274,58 +302,6 @@ export default function MarketPrice() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="bg-white rounded shadow p-4">
-        <h3 className="font-medium mb-3">Historical Prices</h3>
-        <div className="flex items-center gap-3 mb-3">
-          <select
-            value={historyCrop}
-            onChange={(e) => setHistoryCrop(e.target.value)}
-            className="border rounded px-3 py-2"
-          >
-            <option value="">Select commodity</option>
-            {(unique?.Commodity || []).map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              if (!historyCrop)
-                return alert("Please select a crop to view history");
-              setShowHistory(true);
-            }}
-            className="bg-blue-600 text-white rounded px-3 py-1"
-          >
-            View History
-          </button>
-        </div>
-
-        {showHistory ? (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-gray-600">
-                <th className="py-2">Date</th>
-                <th className="py-2">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(HISTORY[historyCrop] || []).map((h) => (
-                <tr key={h.date} className="border-t">
-                  <td className="py-2">{h.date}</td>
-                  <td className="py-2">{h.price}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="text-sm text-gray-500">
-            Select a crop and click "View History" to see historical prices.
-          </div>
-        )}
       </div>
     </div>
   );

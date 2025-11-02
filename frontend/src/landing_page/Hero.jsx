@@ -23,20 +23,13 @@ export default function Hero({
           <div className="h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* simple leaf SVG */}
-              <svg
-                className="w-6 h-6 text-green-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 2C12 2 7 5 5 9c-2 4 2 8 7 11 5-3 9-7 7-11-2-4-7-7-7-7z"
-                  fill="#22c55e"
-                />
-              </svg>
-              <span className="font-semibold text-green-600">
-                <a href="/" className="text-slate-700 hover:text-slate-900">
-                  Farmer Helper
+              <span className="font-semibold text-green-600" style={{fontSize:23}}>
+                <a
+                  href="/"
+                  className="text-green-600 hover:text-green-700 flex items-center gap-2"
+                >
+                  <i className="fas fa-seedling" aria-hidden="true" />
+                  <span>Farmer Helper</span>
                 </a>
               </span>
             </div>
@@ -106,12 +99,12 @@ export default function Hero({
                 START FREE TRIAL
               </Link>
 
-              <Link
-                to="#features"
+              <a
+                href="#features"
                 className="inline-block border border-white/70 text-white px-6 py-3 rounded-full hover:bg-white/10 text-sm md:text-base"
               >
                 EXPLORE FEATURES
-              </Link>
+              </a>
             </div>
           </div>
 

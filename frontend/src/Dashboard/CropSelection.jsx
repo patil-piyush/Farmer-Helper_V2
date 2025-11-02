@@ -63,6 +63,36 @@ export default function CropSelection() {
           rainfall: `${payload.rainfall} mm`,
         },
       });
+      // record activity for recommendations
+      try {
+        const top = combined
+          .map((c) => c.name)
+          .slice(0, 3)
+          .join(", ");
+        const title = `Crop recommendation: ${top || "No suggestion"}`;
+        const subtitle = `Based on soil pH ${payload.ph}`;
+        const item = {
+          id: `${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          title,
+          subtitle,
+          timestamp: Date.now(),
+        };
+        try {
+          const raw = localStorage.getItem("recentActivities");
+          const arr = raw ? JSON.parse(raw) : [];
+          const next = [item, ...arr].slice(0, 10);
+          localStorage.setItem("recentActivities", JSON.stringify(next));
+        } catch (e) {}
+        try {
+          window.dispatchEvent(
+            new CustomEvent("activityAdded", { detail: item })
+          );
+        } catch (e) {
+          const evt = document.createEvent("CustomEvent");
+          evt.initCustomEvent("activityAdded", true, true, item);
+          window.dispatchEvent(evt);
+        }
+      } catch (e) {}
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || "Failed to fetch crop recommendation");

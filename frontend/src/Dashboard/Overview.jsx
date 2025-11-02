@@ -22,25 +22,92 @@ export default function Overview() {
   // Chatbot states
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState([
-    {
-      sender: "bot",
-      text: "Hi! 👋 I'm your AI farming assistant. How can I help you today?",
-    },
+    { sender: "assistant", text: "How can I help you today?" },
   ]);
   const [loading, setLoading] = useState(false);
 
-  // --- Load user info ---
+  // Recent activities (persisted in localStorage)
+  const [recentActivities, setRecentActivities] = useState([]);
+
+  // Load recent activities on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("recentActivities");
+      if (raw) setRecentActivities(JSON.parse(raw));
+    } catch (e) {}
+
+    const handler = (e) => {
+      const detail = e?.detail;
+      if (detail) {
+        // allow other components to push activities
+        const item = {
+          id: `${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          title: detail.title || detail.action || "Activity",
+          subtitle: detail.subtitle || "",
+          timestamp: Date.now(),
+        };
+        setRecentActivities((prev) => {
+          const next = [item, ...(prev || [])].slice(0, 10);
+          try {
+            localStorage.setItem("recentActivities", JSON.stringify(next));
+          } catch (e) {}
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("activityAdded", handler);
+    return () => window.removeEventListener("activityAdded", handler);
+  }, []);
+
+  function persistActivities(list) {
+    try {
+      localStorage.setItem("recentActivities", JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function formatTimeAgo(ts) {
+    if (!ts) return "-";
+    const diff = Date.now() - ts;
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return `${secs}s ago`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
+  function addActivity(title, subtitle) {
+    const item = {
+      id: `${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      title,
+      subtitle,
+      timestamp: Date.now(),
+    };
+    const next = [item, ...(recentActivities || [])].slice(0, 10);
+    setRecentActivities(next);
+    persistActivities(next);
+  }
+
+  // Load user info (prefer a real name; if stored name looks like an email, fetch profile)
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
       const u = stored ? JSON.parse(stored) : null;
-      if (u && u.name) {
+      if (
+        u &&
+        u.name &&
+        !(typeof u.name === "string" && u.name.includes("@"))
+      ) {
         setName(u.name);
-        if (u?.farmsize || typeof u?.farmsize === "number")
-          setFarmSize(u.farmsize);
+        if (typeof u.farmsize !== "undefined") setFarmSize(u.farmsize);
         return;
       }
-    } catch (e) {}
+    } catch (e) {
+      // ignore parse errors
+    }
 
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -67,6 +134,24 @@ export default function Overview() {
         } catch (e) {}
       })
       .catch(() => {});
+
+    const handler = (e) => {
+      const detail = e?.detail;
+      if (detail && detail.name) setName(detail.name);
+      if (detail && typeof detail.farmsize !== "undefined")
+        setFarmSize(detail.farmsize);
+
+      // Also record profile updates as recent activity
+      if (detail) {
+        try {
+          const title = "Profile updated";
+          const subtitle = `Updated profile information`;
+          addActivity(title, subtitle);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
   }, []);
 
   // --- Weather fetching ---
@@ -85,6 +170,13 @@ export default function Overview() {
         });
         if (cancelled) return;
         setWeather(res.data);
+        try {
+          if (loc)
+            localStorage.setItem(
+              `weather_${loc}`,
+              JSON.stringify({ _ts: Date.now(), data: res.data })
+            );
+        } catch (e) {}
       } catch (err) {
         if (cancelled) return;
         setWeatherError(
@@ -100,7 +192,25 @@ export default function Overview() {
       const stored = localStorage.getItem("user");
       const u = stored ? JSON.parse(stored) : null;
       const loc = u?.location;
-      if (loc) fetchWeatherForLocation(loc);
+      if (loc) {
+        // try cache first (5 minutes TTL)
+        try {
+          const raw = localStorage.getItem(`weather_${loc}`);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed._ts && Date.now() - parsed._ts < 5 * 60 * 1000) {
+              setWeather(parsed.data);
+            } else {
+              localStorage.removeItem(`weather_${loc}`);
+              fetchWeatherForLocation(loc);
+            }
+          } else {
+            fetchWeatherForLocation(loc);
+          }
+        } catch (e) {
+          fetchWeatherForLocation(loc);
+        }
+      }
     } catch (e) {}
 
     return () => {
@@ -140,13 +250,21 @@ export default function Overview() {
         .filter((r) => !isNaN(r.modal));
 
       if (!numericRecords.length) {
-        if (isMountedRef.current)
-          setMarketStat({
+        if (isMountedRef.current) {
+          const payload = {
             commodity: rand,
             latestDate: latestDate || "-",
             modalPrice: null,
             market: null,
-          });
+          };
+          setMarketStat(payload);
+          try {
+            localStorage.setItem(
+              "marketStat",
+              JSON.stringify({ _ts: Date.now(), data: payload })
+            );
+          } catch (e) {}
+        }
         return;
       }
 
@@ -154,13 +272,21 @@ export default function Overview() {
         (a, b) => (b.modal > a.modal ? b : a),
         numericRecords[0]
       );
-      if (isMountedRef.current)
-        setMarketStat({
+      if (isMountedRef.current) {
+        const payload = {
           commodity: rand,
           latestDate: latestDate || top.Arrival_Date,
           modalPrice: top.modal,
           market: top.Market,
-        });
+        };
+        setMarketStat(payload);
+        try {
+          localStorage.setItem(
+            "marketStat",
+            JSON.stringify({ _ts: Date.now(), data: payload })
+          );
+        } catch (e) {}
+      }
     } catch (err) {
       if (isMountedRef.current) {
         setMarketError(
@@ -177,7 +303,24 @@ export default function Overview() {
 
   useEffect(() => {
     isMountedRef.current = true;
-    refreshMarketStat();
+    // Load cached market stat if present to avoid refetching when user navigates away and back.
+    try {
+      const raw = localStorage.getItem("marketStat");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // check TTL (10 minutes)
+        if (!parsed._ts || Date.now() - parsed._ts < 10 * 60 * 1000) {
+          setMarketStat(parsed.data || null);
+          setMarketLoading(false);
+        } else {
+          // stale: leave unloaded until user refreshes
+          localStorage.removeItem("marketStat");
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
     return () => {
       isMountedRef.current = false;
     };
@@ -217,7 +360,7 @@ export default function Overview() {
   return (
     <div>
       {/* Top stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Weather */}
         <div className="bg-white p-4 rounded shadow">
           <div className="flex items-center justify-between">
@@ -301,16 +444,6 @@ export default function Overview() {
           )}
         </div>
 
-        {/* Crop Health */}
-        <div className="bg-white p-4 rounded shadow">
-          <div className="text-sm text-gray-500 flex items-center gap-2">
-            <span className="text-green-600">🌱</span>Crop Health
-          </div>
-          <div className="text-2xl font-semibold mt-2">Good</div>
-          <div className="text-sm text-gray-500 mt-1">No issues detected</div>
-          <div className="text-xs text-gray-400 mt-1">Last checked: Today</div>
-        </div>
-
         {/* Farm Stats */}
         <div className="bg-white p-4 rounded shadow">
           <div className="text-sm text-gray-500 flex items-center gap-2">
@@ -339,57 +472,50 @@ export default function Overview() {
         {/* Recent Activities */}
         <div className="lg:col-span-2 bg-white rounded shadow p-4">
           <h3 className="font-semibold mb-3">Recent Activities</h3>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-sm text-gray-500">Recent activities</div>
+            <div>
+              <button
+                onClick={() => {
+                  setRecentActivities([]);
+                  try {
+                    localStorage.removeItem("recentActivities");
+                  } catch (e) {}
+                }}
+                className="text-xs text-gray-500 hover:underline"
+              >
+                Clear history
+              </button>
+            </div>
+          </div>
           <ul className="divide-y divide-gray-100">
-            <li className="py-3 flex justify-between items-start">
-              <div>
-                <div className="font-medium">Disease scan completed</div>
-                <div className="text-sm text-gray-600">
-                  No diseases detected in wheat crop
-                </div>
-              </div>
-              <div className="text-xs text-gray-400">3 days ago</div>
-            </li>
-            <li className="py-3 flex justify-between items-start">
-              <div>
-                <div className="font-medium">Weather alert</div>
-                <div className="text-sm text-gray-600">
-                  Heavy rainfall expected next week
-                </div>
-              </div>
-              <div className="text-xs text-gray-400">5 days ago</div>
-            </li>
-            <li className="py-3 flex justify-between items-start">
-              <div>
-                <div className="font-medium">Market price update</div>
-                <div className="text-sm text-gray-600">
-                  Wheat prices increased by 5%
-                </div>
-              </div>
-              <div className="text-xs text-gray-400">1 week ago</div>
-            </li>
+            {recentActivities && recentActivities.length ? (
+              recentActivities.map((a) => (
+                <li
+                  key={a.id}
+                  className="py-3 flex justify-between items-start"
+                >
+                  <div>
+                    <div className="font-medium">{a.title}</div>
+                    {a.subtitle && (
+                      <div className="text-sm text-gray-600">{a.subtitle}</div>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {formatTimeAgo(a.timestamp)}
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="py-3 text-sm text-gray-600">
+                No recent activities yet.
+              </li>
+            )}
           </ul>
         </div>
 
         {/* Quick Actions + Chatbot */}
         <aside className="bg-white rounded shadow p-4 flex flex-col justify-between">
-          <div>
-            <h3 className="font-semibold mb-3">Quick Actions</h3>
-            <div className="space-y-3 mb-6">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded py-2">
-                📷 Scan for Diseases
-              </button>
-              <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white rounded py-2">
-                ☁ Check Weather
-              </button>
-              <button className="w-full bg-green-600 hover:bg-green-700 text-white rounded py-2">
-                📋 View Market Prices
-              </button>
-              <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black rounded py-2">
-                🌾 Crop Advisory
-              </button>
-            </div>
-          </div>
-
           {/* Chatbot */}
           <div className="border-t pt-4 mt-auto">
             <h3 className="font-semibold mb-3">💬 Chat Assistant</h3>
