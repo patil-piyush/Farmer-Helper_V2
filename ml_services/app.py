@@ -12,8 +12,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ---- Blueprints Registration ----
-app.register_blueprint(crop_bp, url_prefix="/api/crop")
-app.register_blueprint(disease_bp, url_prefix="/api/disease")
+app.register_blueprint(crop_bp)
+app.register_blueprint(disease_bp)
 app.register_blueprint(dialogflow_bp, url_prefix="/api/dialogflow")
 
 # ---- Health Check Route ----
