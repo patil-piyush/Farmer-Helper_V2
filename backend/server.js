@@ -7,7 +7,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const cropRoutes = require('./routes/cropRoutes');
-// const diseaseRoutes = require('./routes/diseaseRoutes');
+const diseaseRoutes = require('./routes/diseaseRoutes');
 const marketRoutes = require('./routes/marketRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 
@@ -29,7 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/weather', protect, weatherRoutes);
 app.use('/api/crop', protect, cropRoutes);
-// app.use('/api/disease', auth, diseaseRoutes);
+app.use('/api/disease', protect, diseaseRoutes);
 app.use('/api/market', protect, marketRoutes);
 
 // Connect to MongoDB

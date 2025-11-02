@@ -16,6 +16,10 @@ def predict_disease():
         file.save(path)
 
         detected = detect_disease(path)
+
+        # delete the temp image after processing
+        os.remove(path)
+
         return jsonify({"detected_diseases": detected})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
