@@ -1,8 +1,6 @@
 # Farmer Helper - AI for Farmers & Agriculture
-#### Video Demo:  <URL HERE>
+#### Video Demo:  https://youtu.be/P2Jr69PsWoY
 #### Description:
-
----
 
 ### Project Overview
 Farmer Helper is an AI-powered platform that leverages machine learning, deep learning, and cloud integration to support farmers in daily agricultural decisions. It offers crop recommendations, plant disease and weed detection, weather forecasts, market insights, and an AI chatbot for instant assistance. The system aims to make farming smarter, more profitable, and less dependent on guesswork.
