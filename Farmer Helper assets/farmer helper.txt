@@ -1,0 +1,46 @@
+Across India, millions of farmers face unpredictable weather, crop diseases, and fluctuating market prices — challenges that directly affect yield and income.
+Farmer Helper bridges this gap with AI-driven insights — helping farmers make smarter, faster, and data-backed decisions.
+
+
+
+Countries using precision agriculture — like Australia and Israel — have already improved yield efficiency. Farmer Helper brings that same innovation to Indian farms.
+
+
+
+Let’s start from the beginning. The landing page welcomes users with a clean overview — from here, farmers can explore features or sign up to get started.
+
+
+
+Registering is simple — just name, email, and password. Once logged in, we’re taken straight to the main dashboard.
+
+
+
+This is the farmer’s control center — the Dashboard. It shows local weather, market highlights, and recent farm updates. From here, everything’s one click away — disease detection, crop advice, or market insights.
+
+
+
+Now, let’s explore crop recommendations. The farmer enters soil pH, N-P-K levels, rainfall, and temperature.
+Our trained machine learning model analyzes these inputs and recommends the best crops with confidence scores.
+
+
+Next, the Disease Detection module. Farmers simply upload a photo of a leaf — the AI model scans the image and instantly detects possible diseases.
+
+
+Accurate, local weather data matters. Our system uses trusted APIs to show real-time temperature, wind, and rainfall forecasts — personalized to the farmer’s saved location.
+Also displays the future forecasting of next two days.
+
+
+Market Prices gives farmers the power to sell smart. They can search by state, district, commodity and Date — and instantly see current market prices across nearby mandis.
+
+
+The Profile section stores each farmer’s location, farm size, and preferences.
+These details personalize every part of the experience — from local weather to tailored crop recommendations.
+
+
+
+Under the hood, our system connects a Node.js backend with Python-based ML services — making predictions and insights fast, reliable, and scalable.
+
+
+Farmer Helper empowers farmers to make smarter decisions — reducing risks, improving yield, and saving time.
+We’ve built a tool that’s simple, actionable, and ready to scale.
+Thank you for watching.

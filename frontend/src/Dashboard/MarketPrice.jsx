@@ -90,7 +90,7 @@ export default function MarketPrice() {
     }
 
     // validate ISO date format yyyy-mm-dd
-    const isoMatch = arrivalDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const isoMatch = arrivalDate.match(/^\d{4}-\d{2}-\d{2}$/);
     if (!isoMatch) {
       alert("Please choose a valid date from the calendar");
       return;
@@ -107,13 +107,16 @@ export default function MarketPrice() {
           district: districtSel,
           commodity: commodity,
           arrivalDate: formatIsoToDdMmYyyy(arrivalDate) || arrivalDate,
-          limit: 500,
         },
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      // res.data expected shape: { count, latestDate, records: [...] }
-      setPrediction(res.data);
+      // Show only the first 10 records from the backend response
+      setPrediction({
+        ...res.data,
+        records: (res.data.records || []).slice(0, 10),
+      });
+
       // record activity and persist so Overview can pick it up
       try {
         const title = `Market query: ${commodity || "All commodities"}`;
