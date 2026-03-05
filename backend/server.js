@@ -20,7 +20,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  origin: 'http://localhost:5173', // your Vite dev server
+    // any  server can access backend
+  origin: '*',
   credentials: true
 }));
 

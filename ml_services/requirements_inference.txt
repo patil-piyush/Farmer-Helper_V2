@@ -1,0 +1,13 @@
+Flask
+flask-cors
+numpy
+pandas
+joblib
+scikit-learn
+requests
+pillow
+opencv-python-headless
+torch
+torchvision
+ultralytics
+google-cloud-dialogflow
