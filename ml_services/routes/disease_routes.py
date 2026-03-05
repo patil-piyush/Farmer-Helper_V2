@@ -1,3 +1,4 @@
+import requests
 from flask import Blueprint, request, jsonify
 import os
 from services.disease_service import detect_disease
@@ -7,19 +8,33 @@ disease_bp = Blueprint("disease_bp", __name__)
 @disease_bp.route("/predict/disease", methods=["POST"])
 def predict_disease():
     try:
-        if "image" not in request.files:
-            return jsonify({"error": "No image uploaded"}), 400
 
-        file = request.files["image"]
-        os.makedirs("uploads", exist_ok=True)
-        path = os.path.join("uploads", file.filename)
-        file.save(path)
+        image_url = request.form.get("image_url")
 
-        detected = detect_disease(path)
+        if not image_url:
+            return jsonify({"error": "No image_url provided"}), 400
 
-        # delete the temp image after processing
-        os.remove(path)
+        os.makedirs("temp", exist_ok=True)
+
+        temp_path = os.path.join("temp", "image.jpg")
+
+        # download image from S3
+        response = requests.get(image_url)
+
+        if response.status_code != 200:
+            return jsonify({"error": "Failed to download image from S3"}), 400
+
+        with open(temp_path, "wb") as f:
+            f.write(response.content)
+
+        if os.path.getsize(temp_path) == 0:
+            return jsonify({"error": "Downloaded image is empty"}), 400
+
+        detected = detect_disease(temp_path)
+
+        os.remove(temp_path)
 
         return jsonify({"detected_diseases": detected})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500

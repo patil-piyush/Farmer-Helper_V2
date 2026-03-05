@@ -6,14 +6,16 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0
 
-COPY requirements.txt .
+COPY requirements_inference.txt .
 
 RUN pip install --upgrade pip
 
-RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements_inference.txt
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE 5001
 
-CMD ["python","app.py"]
+CMD ["python", "app.py"]
