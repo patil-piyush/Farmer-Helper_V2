@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build: ./backend
+    container_name: farmer_backend
+    ports:
+      - "5000:5000"
+    env_file:
+    - ./backend/.env
+    depends_on:
+      - ml_service
+
+  frontend:
+    build: ./frontend
+    container_name: farmer_frontend
+    ports:
+      - "5173:5173"
+    env_file:
+    - ./frontend/.env
+    depends_on:
+      - backend
+
+  ml_service:
+    build: ./ml_services
+    container_name: farmer_ml_service
+    ports:
+      - "8000:8000"
