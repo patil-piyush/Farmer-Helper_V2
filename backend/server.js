@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
     // any  server can access backend
-  origin: '*',
+  origin: ['*', 'http://localhost:5173'],
   credentials: true
 }));
 
