@@ -11,3 +11,4 @@ torch
 torchvision
 ultralytics
 google-cloud-dialogflow
+boto3
