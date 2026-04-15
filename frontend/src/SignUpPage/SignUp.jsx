@@ -39,7 +39,7 @@ export default function SignUp() {
         email: form.email,
         password: form.password,
         location: form.location,
-        farmsize: Number(form.farmsize),
+        farmsize: form.farmsize ? Number(form.farmsize) : 0,
       });
 
       navigate("/dashboard"); // 👈 redirect after success
@@ -60,7 +60,10 @@ export default function SignUp() {
         farmsize: "",
       });
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.log("FULL ERROR:", err);
+      console.log("RESPONSE:", err.response);
+      console.log("DATA:", err.response?.data);
+
       setError(err.response?.data?.message || "Registration failed");
     }
   }
