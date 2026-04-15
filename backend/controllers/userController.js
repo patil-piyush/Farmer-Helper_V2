@@ -1,118 +1,153 @@
 require('dotenv').config();
-const User = require('../models/User');
+
+const dynamoDB = require('../config/dynamodb');
+const { GetCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const bcrypt = require('bcryptjs');
 
 
-
+// =======================
+// ✅ GET USER PROFILE
+// =======================
 const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const result = await dynamoDB.send(new GetCommand({
+            TableName: "UsersAuth",
+            Key: { email: req.user.email }
+        }));
+
+        const user = result.Item;
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        delete user.password; // remove password
+
         res.status(200).json(user);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// const updateUserProfile = async (req, res) => {
-//     try {
-//         const user = await User.findById(req.user.id);
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-//         const { fullname, email, password, location, farmsize } = req.body;
 
-//         if (fullname) user.fullname = fullname;
-//         if (email) user.email = email;
-//         if (location) user.location = location;
-//         if (farmsize) user.farmsize = farmsize;
-//         if (password) {
-//             const salt = await bcrypt.genSalt(10);
-//             user.password = await bcrypt.hash(password, salt);
-//         }
-//         const updatedUser = await user.save();
-//         res.status(200).json({
-//             _id: updatedUser._id,
-//             fullname: updatedUser.fullname,
-//             email: updatedUser.email,
-//             location: updatedUser.location,
-//             farmsize: updatedUser.farmsize,
-//         },{ message: 'User profile updated successfully.' });
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-
+// =======================
+// ✅ UPDATE USER PROFILE
+// =======================
 const updateUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        const { fullname, location, farmsize } = req.body;
+
+        // Build dynamic update expression
+        let updateExpression = "set ";
+        let ExpressionAttributeValues = {};
+        let updates = [];
+
+        if (fullname) {
+            updates.push("fullname = :f");
+            ExpressionAttributeValues[":f"] = fullname;
         }
 
-        const { fullname, email, location, farmsize } = req.body;
+        if (location) {
+            updates.push("location = :l");
+            ExpressionAttributeValues[":l"] = location;
+        }
 
-        if (fullname) user.fullname = fullname;
-        if (email) user.email = email;
-        if (location) user.location = location;
-        if (farmsize) user.farmsize = farmsize;
+        if (farmsize !== undefined) {
+            updates.push("farmsize = :fs");
+            ExpressionAttributeValues[":fs"] = farmsize;
+        }
 
-        const updatedUser = await user.save();
+        if (updates.length === 0) {
+            return res.status(400).json({ message: "No fields to update" });
+        }
+
+        updateExpression += updates.join(", ");
+
+        await dynamoDB.send(new UpdateCommand({
+            TableName: "UsersAuth",
+            Key: { email: req.user.email },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues,
+            ReturnValues: "ALL_NEW"
+        }));
 
         res.status(200).json({
-            message: 'User profile updated successfully.',
-            user: {
-                _id: updatedUser._id,
-                fullname: updatedUser.fullname,
-                email: updatedUser.email,
-                location: updatedUser.location,
-                farmsize: updatedUser.farmsize,
-            },
+            message: 'User profile updated successfully'
         });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 
+// =======================
+// ✅ CHANGE PASSWORD
+// =======================
 const changeUserPassword = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
         const { oldPassword, newPassword } = req.body;
 
         if (!oldPassword || !newPassword) {
-            return res.status(400).json({ message: 'Both old and new passwords are required.' });
+            return res.status(400).json({
+                message: 'Both old and new passwords are required.'
+            });
         }
 
+        // 🔍 Get user
+        const result = await dynamoDB.send(new GetCommand({
+            TableName: "UsersAuth",
+            Key: { email: req.user.email }
+        }));
 
+        const user = result.Item;
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // 🔐 Check old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
+
         if (!isMatch) {
-            return res.status(401).json({ message: 'Old password is incorrect.' });
+            return res.status(401).json({
+                message: 'Old password is incorrect.'
+            });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        newHashedPassword = await bcrypt.hash(newPassword, salt);
-        const isSame = await bcrypt.compare(oldPassword, newHashedPassword);
+        // ❗ Prevent same password
+        const isSame = await bcrypt.compare(newPassword, user.password);
         if (isSame) {
-            return res.status(400).json({ message: 'New password must be different from the old password.' });
+            return res.status(400).json({
+                message: 'New password must be different'
+            });
         }
 
-        user.password = newHashedPassword;
-        await user.save();
+        // 🔐 Hash new password
+        const newHashedPassword = await bcrypt.hash(newPassword, 10);
 
-        res.status(200).json({ message: 'Password changed successfully.' });
+        // 💾 Update password
+        await dynamoDB.send(new UpdateCommand({
+            TableName: "UsersAuth",
+            Key: { email: req.user.email },
+            UpdateExpression: "set password = :p",
+            ExpressionAttributeValues: {
+                ":p": newHashedPassword
+            }
+        }));
+
+        res.status(200).json({
+            message: 'Password changed successfully.'
+        });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
 
+// =======================
 module.exports = {
     getUserProfile,
     updateUserProfile,
