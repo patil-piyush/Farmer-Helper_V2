@@ -1,84 +1,134 @@
 require('dotenv').config();
-const User = require('../models/User');
+
+const dynamoDB = require('../config/dynamodb');
+const { GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Helper to generate JWT token
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+// =======================
+// 🔐 GENERATE TOKEN
+// =======================
+const generateToken = (email) => {
+    return jwt.sign({ id: email }, process.env.JWT_SECRET, {
+        expiresIn: '7d'
+    });
 };
 
+
+// =======================
+// 📝 REGISTER USER
+// =======================
 const registerUser = async (req, res) => {
     try {
         const { fullname, email, password, location, farmsize } = req.body;
 
         if (!fullname || !email || !password) {
-            return res.status(400).json({ message: 'Fullname, email, and password are required.' });
+            return res.status(400).json({
+                message: 'Required fields missing'
+            });
         }
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User with this email already exists.' });
+        // 🔍 Check if user exists
+        const existingUser = await dynamoDB.send(new GetCommand({
+            TableName: "UsersAuth",
+            Key: { email }
+        }));
+
+        if (existingUser.Item) {
+            return res.status(400).json({
+                message: "User already exists"
+            });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // 🔐 Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = new User({
-            fullname,
-            email,
-            password: hashedPassword,
-            location,
-            farmsize
-        });
+        // 💾 Save user
+        await dynamoDB.send(new PutCommand({
+            TableName: "UsersAuth",
+            Item: {
+                email,
+                fullname,
+                password: hashedPassword,
+                location: location || "",
+                farmsize: farmsize || 0,
+                createdAt: new Date().toISOString()
+            }
+        }));
 
-        const savedUser = await newUser.save();
-        const token = generateToken(savedUser._id);
+        const token = generateToken(email);
 
         res.status(201).json({
-            message: 'User registered successfully.',
-            _id: savedUser._id,
-            fullname: savedUser.fullname,
-            email: savedUser.email,
-            location: savedUser.location,
-            farmsize: savedUser.farmsize,
-            token,
+            message: "User registered successfully",
+            email,
+            fullname,
+            token
         });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: error.message
+        });
     }
 };
 
 
+// =======================
+// 🔑 LOGIN USER
+// =======================
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required.' });
+            return res.status(400).json({
+                message: "Email and password required"
+            });
         }
-        const user = await User.findOne({ email });
+
+        // 🔍 Get user
+        const result = await dynamoDB.send(new GetCommand({
+            TableName: "UsersAuth",
+            Key: { email }
+        }));
+
+        const user = result.Item;
+
         if (!user) {
-            return res.status(400).json({ message: 'Invalid email or password.' });
+            return res.status(400).json({
+                message: "Invalid credentials"
+            });
         }
+
+        // 🔐 Compare password
         const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid email or password.' });
+            return res.status(400).json({
+                message: "Invalid credentials"
+            });
         }
-        const token = generateToken(user._id);
+
+        const token = generateToken(email);
+
         res.status(200).json({
-            message: 'User logged in successfully.',
-            _id: user._id,
-            name: user.name,
+            message: "Login successful",
             email: user.email,
-            profilePicture: user.profilePicture,
-            location: user.location,
-            token,
+            fullname: user.fullname,
+            token
         });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: error.message
+        });
     }
 };
 
+
+// =======================
 module.exports = {
     registerUser,
     loginUser,
