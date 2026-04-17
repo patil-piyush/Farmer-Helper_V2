@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [name, setName] = useState("");
   const navigate = useNavigate();
 
-  // 🚫 Redirect to login if not authenticated
+  // Redirect to login if not authenticated
   useEffect(() => {
     const token = localStorage.getItem("token"); // or "auth" depending on your setup
     if (!token) {

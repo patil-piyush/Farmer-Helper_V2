@@ -24,7 +24,7 @@ def health():
 
 # ---- Entry Point ----
 if __name__ == "__main__":
-    print("🚀 Starting ML Services Backend on port 5001...")
+    print(" Starting ML Services Backend on port 5001...")
     print("📡 Registered routes:")
     print("  - /api/crop")
     print("  - /api/disease")

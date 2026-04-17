@@ -6,7 +6,7 @@ dialogflow_bp = Blueprint("dialogflow_bp", __name__)
 
 # Path to your service account key
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "dialogflow-key.json"
-PROJECT_ID = "r-bot-khhk"  # ✅ Use your actual Dialogflow project ID
+PROJECT_ID = "r-bot-khhk"  #  Use your actual Dialogflow project ID
 
 
 @dialogflow_bp.route("/", methods=["POST"])

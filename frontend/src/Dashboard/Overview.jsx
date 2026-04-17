@@ -345,7 +345,7 @@ export default function Overview() {
         ...prev,
         {
           sender: "bot",
-          text: "⚠ Unable to connect to the server. Please try again later.",
+          text: " Unable to connect to the server. Please try again later.",
         },
       ]);
     } finally {

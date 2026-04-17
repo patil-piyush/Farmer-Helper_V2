@@ -198,3 +198,59 @@ ml_services/
 
 ## Summary
 Farmer Helper bridges the gap between traditional farming and modern agriculture through AI innovation. With crop intelligence, disease detection, market awareness, and real-time chatbot support — it’s not just an app, it’s a **digital partner** for every farmer’s success journey.
+
+
+---
+
+---
+## Project Setup
+
+## Backend .env
+```
+PORT=5000
+MONGO_URI=mongodb+srv://username:password@cluster.etifyil.mongodb.net/databseName
+JWT_SECRET=JWT_SECRET
+WEATHER_API_KEY=api_key_for_weather_data
+ML_SERVICE_URL=http://localhost:5001
+DATA_GOV_API_KEY=api_key_for_market_price
+DATA_GOV_BASE_URL=base_url
+```
+
+---
+
+## Frontend .env
+```
+VITE_API_URL=http://localhost:5000
+```
+
+
+---
+
+
+
+open three terminals - 
+- Backend
+- Frontend
+- ml_services
+
+commands to execute - 
+- Backend  
+  ```
+  npm install
+  npm run server
+  ```
+- Frontend  
+  ```
+  npm install
+  npm run dev
+  ```
+
+- ml_services  
+
+  install python- 3.11
+  ```
+  python -m venv venv
+  source venv/Scripts/activate
+  pip install -r requirement.txt
+  python app.py
+  ```
