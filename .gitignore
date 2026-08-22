@@ -1,1 +1,8 @@
 .env
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+ansible/inventory.ini
+ansible/secrets.yml
+*.pem

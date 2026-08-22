@@ -1,0 +1,6 @@
+# Copy this to terraform.tfvars and fill in your own values.
+# terraform.tfvars should NOT be committed if it ever holds secrets — here it only holds a path, so it's fine either way.
+
+public_key_path = "~/.ssh/id_rsa.pub"
+key_name        = "farmer-helper-key"
+s3_bucket_name  = "farmer-helper-storage-001" # change if this exact name is already taken globally
