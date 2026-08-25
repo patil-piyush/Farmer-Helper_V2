@@ -10,7 +10,7 @@ const router = express.Router();
 const upload = multer({
   storage: multerS3({
     s3: s3,
-    bucket: "farmer-helper-storage-001",
+    bucket: "farmer-helper-storage-devops",
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: (req, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
