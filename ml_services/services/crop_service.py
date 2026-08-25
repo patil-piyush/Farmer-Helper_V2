@@ -6,7 +6,7 @@ import os
 import threading
 import time
 
-BUCKET_NAME = "farmer-helper-storage-001"
+BUCKET_NAME = "farmer-helper-storage-devops"
 MODEL_KEY = "models/crop_recommendation_model.pkl"
 ENCODER_KEY = "models/label_encoder.pkl"
 
