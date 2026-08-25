@@ -5,9 +5,9 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "Free-tier eligible instance type. t3.micro is the free-tier type in eu-north-1 (t2.micro isn't available there)."
+  description = "Free-tier eligible instance type. t3.small is the free-tier type in eu-north-1 (t2.small isn't available there)."
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "key_name" {
