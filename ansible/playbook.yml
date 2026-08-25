@@ -55,7 +55,7 @@
       git:
         repo: "https://github.com/patil-piyush/Farmer-Helper_V2.git"
         dest: /home/ubuntu/app
-        version: aws-deploy
+        version: devops
         force: true
 
     - name: Template backend .env
