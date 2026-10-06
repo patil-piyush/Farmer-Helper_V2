@@ -34,6 +34,11 @@ app.use('/api/crop', protect, cropRoutes);
 app.use('/api/disease', protect, diseaseRoutes);
 app.use('/api/market', protect, marketRoutes);
 
+// ---- Health Check ----
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
 app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on port ${port}`);
 });
