@@ -1,0 +1,65 @@
+{
+  "title": "Farmer Helper Monitoring",
+  "uid": "farmer-helper-dash",
+  "panels": [
+    {
+      "title": "Service Uptime (Up/Down)",
+      "type": "stat",
+      "targets": [
+        { "expr": "up", "legendFormat": "{{job}}" }
+      ],
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Request Rate (Backend)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job='backend'}[1m])) by (route)", "legendFormat": "{{route}}" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 5 }
+    },
+    {
+      "title": "Request Rate (ML Service)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job='ml_service'}[1m])) by (route)", "legendFormat": "{{route}}" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 5 }
+    },
+    {
+      "title": "Error Rate (Backend & ML)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{status_code=~'5..'}[1m])) by (job, route)", "legendFormat": "{{job}} - {{route}}" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 12 }
+    },
+    {
+      "title": "P95 Latency (Backend & ML)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job, route))", "legendFormat": "{{job}} - {{route}}" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 12 }
+    },
+    {
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)", "legendFormat": "CPU %" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 19 }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "100 * (1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes))", "legendFormat": "Memory %" }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 19 }
+    }
+  ],
+  "schemaVersion": 38,
+  "timezone": "browser",
+  "refresh": "5s"
+}

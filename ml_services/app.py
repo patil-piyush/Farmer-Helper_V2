@@ -15,6 +15,9 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+from metrics import setup_metrics
+setup_metrics(app)
+
 # ---- Blueprints Registration ----
 
 app.register_blueprint(crop_bp)

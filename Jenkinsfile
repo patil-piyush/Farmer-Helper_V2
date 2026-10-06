@@ -182,15 +182,27 @@ pipeline {
                     sh """
                         export DOCKERHUB_USER=${DOCKER_USER}
                         export IMAGE_TAG=${IMAGE_TAG}
-                        docker compose -f docker-compose.prod.yml pull
-                        docker compose -f docker-compose.prod.yml up -d
+                        docker compose -p farmer -f docker-compose.prod.yml pull
+                        docker compose -p farmer -f docker-compose.prod.yml up -d
                     """
                 }
             }
         }
 
         // ============================================================
-        // STAGE 8 — Health Checks (with retries)
+        // STAGE 8 — Start Monitoring Stack
+        // ============================================================
+        stage('Start Monitoring') {
+            steps {
+                dir('monitoring') {
+                    sh 'docker compose pull || true'
+                    sh 'docker compose up -d'
+                }
+            }
+        }
+
+        // ============================================================
+        // STAGE 9 — Health Checks (with retries)
         // ============================================================
         stage('Health Check') {
             steps {

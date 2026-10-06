@@ -13,6 +13,10 @@ const marketRoutes = require('./routes/marketRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 
 const app = express();
+const { metricsMiddleware, metricsRoute } = require('./metrics');
+
+// Metrics middleware must be before routes
+app.use(metricsMiddleware);
 
 const port = process.env.PORT || 5000;
 
@@ -34,7 +38,9 @@ app.use('/api/crop', protect, cropRoutes);
 app.use('/api/disease', protect, diseaseRoutes);
 app.use('/api/market', protect, marketRoutes);
 
-// ---- Health Check ----
+// ---- Metrics & Health Check ----
+app.get('/metrics', metricsRoute);
+
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
