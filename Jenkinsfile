@@ -192,9 +192,13 @@ pipeline {
         // ============================================================
         // STAGE 8 — Start Monitoring Stack
         // ============================================================
-        stage('Start Monitoring') {
+        stage('Start Monitoring & Logging') {
             steps {
                 dir('monitoring') {
+                    sh 'docker compose pull || true'
+                    sh 'docker compose up -d'
+                }
+                dir('logging') {
                     sh 'docker compose pull || true'
                     sh 'docker compose up -d'
                 }

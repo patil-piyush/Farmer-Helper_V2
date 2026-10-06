@@ -1,0 +1,51 @@
+{
+  "title": "Farmer Helper Logs",
+  "uid": "farmer-helper-logs",
+  "panels": [
+    {
+      "title": "Log Volume by Service",
+      "type": "timeseries",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "sum by(service) (rate({service=~\"backend|frontend|ml_service\"}[1m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Error Logs Volume",
+      "type": "timeseries",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "sum by(service) (rate({service=~\"backend|frontend|ml_service\"} |= \"error\" [1m]))",
+          "legendFormat": "{{service}} Errors"
+        }
+      ],
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Live Logs by Service",
+      "type": "logs",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "{service=~\"backend|frontend|ml_service\"}"
+        }
+      ],
+      "gridPos": { "h": 15, "w": 24, "x": 0, "y": 7 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ],
+  "schemaVersion": 38,
+  "timezone": "browser",
+  "refresh": "10s"
+}
