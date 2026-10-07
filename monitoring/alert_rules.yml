@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------
+# Alert Rules — fires on SLO breach / high error rate
+# ---------------------------------------------------------------
+groups:
+  - name: slo_alerts
+    rules:
+
+      # Fires when the 5-minute availability SLI drops below the 99% SLO
+      - alert: HighErrorRate_SLO_Breach
+        expr: sli:availability:rate5m < 0.99
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend availability SLO breached (< 99%)"
+          description: |
+            The 5-minute availability SLI is {{ $value | humanizePercentage }}.
+            This means more than 1% of backend requests are returning 5xx errors.
+            Check /health endpoints and Loki logs for root cause.
+
+      # Fires when the availability error budget is fully consumed
+      - alert: ErrorBudgetExhausted
+        expr: sli:error_budget:availability < 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Availability error budget exhausted"
+          description: |
+            The 30-minute error budget is at {{ $value | humanizePercentage }}.
+            The team should investigate and reduce error rate before more users
+            are impacted.

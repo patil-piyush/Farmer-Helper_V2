@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------
+# SLI Recording Rules — pre-compute SLIs every evaluation cycle
+# ---------------------------------------------------------------
+groups:
+  - name: sli_recording_rules
+    interval: 30s
+    rules:
+
+      # ============================================================
+      # AVAILABILITY SLI
+      # Formula:  (total requests − 5xx requests) / total requests
+      #   = 1 − (rate of 5xx) / (rate of all requests)
+      # Window: 5 minutes (short) and 30 minutes (SLO window)
+      # ============================================================
+
+      # --- 5-minute availability (real-time gauge) ---
+      - record: sli:availability:rate5m
+        expr: |
+          1 - (
+            sum(rate(http_requests_total{job="backend", status_code=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_requests_total{job="backend"}[5m])), 1e-10)
+          )
+
+      # --- 30-minute availability (SLO evaluation window) ---
+      - record: sli:availability:rate30m
+        expr: |
+          1 - (
+            sum(rate(http_requests_total{job="backend", status_code=~"5.."}[30m]))
+            /
+            clamp_min(sum(rate(http_requests_total{job="backend"}[30m])), 1e-10)
+          )
+
+      # ============================================================
+      # LATENCY SLI
+      # Formula:  (requests completed in < 500ms) / total requests
+      # Uses the histogram bucket where le="0.5" (500 ms)
+      # Window: 5 minutes (short) and 30 minutes (SLO window)
+      # ============================================================
+
+      # --- 5-minute latency (real-time gauge) ---
+      - record: sli:latency:rate5m
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{job="backend", le="0.5"}[5m]))
+          /
+          clamp_min(sum(rate(http_request_duration_seconds_count{job="backend"}[5m])), 1e-10)
+
+      # --- 30-minute latency (SLO evaluation window) ---
+      - record: sli:latency:rate30m
+        expr: |
+          sum(rate(http_request_duration_seconds_bucket{job="backend", le="0.5"}[30m]))
+          /
+          clamp_min(sum(rate(http_request_duration_seconds_count{job="backend"}[30m])), 1e-10)
+
+      # ============================================================
+      # ERROR BUDGET REMAINING
+      # availability_budget = 1 − ((1 − SLI) / (1 − SLO))
+      # SLO target: 0.99  →  allowed error fraction = 0.01
+      # When budget = 1 → no errors spent, budget = 0 → SLO breached
+      # ============================================================
+
+      - record: sli:error_budget:availability
+        expr: |
+          1 - (
+            (1 - sli:availability:rate30m)
+            /
+            (1 - 0.99)
+          )
+
+      - record: sli:error_budget:latency
+        expr: |
+          1 - (
+            (1 - sli:latency:rate30m)
+            /
+            (1 - 0.95)
+          )

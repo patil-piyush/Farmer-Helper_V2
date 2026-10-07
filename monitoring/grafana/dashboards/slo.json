@@ -1,0 +1,147 @@
+{
+  "title": "Farmer Helper SLO",
+  "uid": "farmer-helper-slo",
+  "panels": [
+    {
+      "title": "Availability SLI (5m) — Target: 99%",
+      "type": "gauge",
+      "targets": [
+        { "expr": "sli:availability:rate5m", "legendFormat": "Availability" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.95 },
+              { "color": "yellow", "value": 0.99 },
+              { "color": "green", "value": 0.995 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Latency SLI (5m) — Target: 95% < 500ms",
+      "type": "gauge",
+      "targets": [
+        { "expr": "sli:latency:rate5m", "legendFormat": "Latency OK" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.80 },
+              { "color": "yellow", "value": 0.90 },
+              { "color": "green", "value": 0.95 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+    },
+    {
+      "title": "Availability Error Budget Remaining",
+      "type": "gauge",
+      "targets": [
+        { "expr": "sli:error_budget:availability", "legendFormat": "Budget" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": -0.5,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0 },
+              { "color": "yellow", "value": 0.25 },
+              { "color": "green", "value": 0.50 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+    },
+    {
+      "title": "Availability SLI Over Time (30m window)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sli:availability:rate30m", "legendFormat": "Availability SLI" },
+        { "expr": "0.99", "legendFormat": "SLO Target (99%)" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Latency SLI Over Time (30m window)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sli:latency:rate30m", "legendFormat": "Latency SLI" },
+        { "expr": "0.95", "legendFormat": "SLO Target (95%)" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "title": "Error Budget Burn-down",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sli:error_budget:availability", "legendFormat": "Availability Budget" },
+        { "expr": "sli:error_budget:latency", "legendFormat": "Latency Budget" },
+        { "expr": "0", "legendFormat": "Budget Exhausted" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 }
+    },
+    {
+      "title": "Active Alerts",
+      "type": "stat",
+      "targets": [
+        { "expr": "ALERTS{alertstate='firing'}", "legendFormat": "{{alertname}}" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 24 }
+    }
+  ],
+  "schemaVersion": 38,
+  "timezone": "browser",
+  "refresh": "10s"
+}
