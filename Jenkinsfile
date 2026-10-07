@@ -160,39 +160,6 @@ pipeline {
                 )
 
                 // --------------------------------------------------------
-                // Trivy Filesystem Scan
-                // --------------------------------------------------------
-                script {
-                    def trivyExitCode = sh(
-                        script: '''#!/bin/bash
-
-                            if [ ! -x /tmp/trivy ]; then
-                                curl -sfL \
-                                    https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-                                    | sh -s -- -b /tmp
-                            fi
-
-                            /tmp/trivy fs . \
-                                --severity CRITICAL \
-                                --format json \
-                                --output trivy-fs-report.json \
-                                --exit-code 1
-                        ''',
-                        returnStatus: true
-                    )
-
-                    archiveArtifacts(
-                        artifacts: 'trivy-fs-report.json',
-                        allowEmptyArchive: true
-                    )
-
-                    if (trivyExitCode != 0) {
-                        error('CRITICAL vulnerabilities found by Trivy — failing the build.')
-                    }
-
-                    echo 'No CRITICAL vulnerabilities found by Trivy.'
-                }
-                // --------------------------------------------------------
                 // Fail only if actual CRITICAL vulnerabilities exist
                 // --------------------------------------------------------
                 script {
