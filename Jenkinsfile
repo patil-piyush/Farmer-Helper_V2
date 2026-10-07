@@ -162,6 +162,22 @@ pipeline {
                 echo 'Security scans completed in report-only mode.'
             }
         }
+
+        stage('Prepare Environment') {
+            steps {
+                sh '''
+                    set -e
+
+                    cp /home/ubuntu/app/backend/.env ./backend/.env
+                    cp /home/ubuntu/app/frontend/.env ./frontend/.env
+
+                    chmod 600 ./backend/.env
+                    chmod 600 ./frontend/.env
+
+                    echo "Environment files prepared successfully."
+                '''
+            }
+        }
         // ============================================================
         // STAGE 5 — Docker Build 
         // ============================================================
