@@ -46,7 +46,7 @@ pipeline {
                 stage('ML Install') {
                     steps {
                         dir('ml_services') {
-                            sh 'pip install --quiet -r requirements-test.txt'
+                            sh 'python3 -m pip install --user --quiet -r requirements-test.txt'
                         }
                     }
                 }
@@ -69,7 +69,7 @@ pipeline {
                 stage('ML Tests') {
                     steps {
                         dir('ml_services') {
-                            sh 'python -m pytest tests/ -v 2>&1 | tee pytest-results.txt'
+                            sh 'python3 -m pytest tests/ -v 2>&1 | tee pytest-results.txt'
                             archiveArtifacts artifacts: 'pytest-results.txt', allowEmptyArchive: true
                         }
                     }
@@ -94,8 +94,8 @@ pipeline {
 
                 // --- pip-audit (ML) ---
                 dir('ml_services') {
-                    sh 'pip install --quiet pip-audit'
-                    sh 'pip-audit -r requirements-test.txt --format json --output pip-audit-report.json || true'
+                    sh 'python3 -m pip install --user --quiet pip-audit'
+                    sh 'python3 -m pip_audit -r requirements-test.txt --format json --output pip-audit-report.json || true'
                     archiveArtifacts artifacts: 'pip-audit-report.json', allowEmptyArchive: true
                 }
 
@@ -116,7 +116,10 @@ pipeline {
                         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /tmp
                         export PATH="/tmp:$PATH"
                     fi
-                    trivy fs . --severity CRITICAL --format json --output trivy-fs-report.json || true
+                    def trivyReport = readFile('trivy-fs-report.json')
+                    if (trivyReport.contains('"Severity": "CRITICAL"') || trivyReport.contains('"Severity":"CRITICAL"')) {
+                        error('CRITICAL vulnerabilities found by Trivy — failing the build.')
+                    }
                 '''
                 archiveArtifacts artifacts: 'trivy-fs-report.json', allowEmptyArchive: true
 
