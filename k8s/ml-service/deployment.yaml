@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: farmer-helper
+  labels:
+    app: farmer-helper
+    component: ml-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: ml-service
+  template:
+    metadata:
+      labels:
+        app: farmer-helper
+        component: ml-service
+    spec:
+      containers:
+        - name: ml-service
+          # Replace <DOCKERHUB_USER> with your Docker Hub username
+          image: <DOCKERHUB_USER>/farmer-ml:latest
+          ports:
+            - containerPort: 5001
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: farmer-helper-config
+                  key: AWS_REGION
+          # --- Probes ---
+          # ML service downloads models from S3 at startup, so give it
+          # extra time before the first liveness check.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          # --- Resources (ML inference needs more memory) ---
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi

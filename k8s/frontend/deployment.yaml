@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: farmer-helper
+  labels:
+    app: farmer-helper
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: farmer-helper
+        component: frontend
+    spec:
+      containers:
+        - name: frontend
+          # Replace <DOCKERHUB_USER> with your Docker Hub username
+          image: <DOCKERHUB_USER>/farmer-frontend:latest
+          ports:
+            - containerPort: 5173
+          env:
+            - name: VITE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: farmer-helper-config
+                  key: VITE_API_URL
+          # --- Probes (no /health route; probe the dev server root) ---
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5173
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5173
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          # --- Resources ---
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi

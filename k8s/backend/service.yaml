@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: farmer-helper
+  labels:
+    app: farmer-helper
+    component: backend
+spec:
+  selector:
+    component: backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP

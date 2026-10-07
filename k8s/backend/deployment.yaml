@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: farmer-helper
+  labels:
+    app: farmer-helper
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: farmer-helper
+        component: backend
+    spec:
+      containers:
+        - name: backend
+          # Replace <DOCKERHUB_USER> with your Docker Hub username
+          image: <DOCKERHUB_USER>/farmer-backend:latest
+          ports:
+            - containerPort: 5000
+          env:
+            # --- From ConfigMap ---
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: farmer-helper-config
+                  key: PORT
+            - name: ML_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: farmer-helper-config
+                  key: ML_SERVICE_URL
+            # --- From Secret ---
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: JWT_SECRET
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: farmer-helper-config
+                  key: AWS_REGION
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: MONGO_URI
+            - name: DYNAMO_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: farmer-helper-secrets
+                  key: DYNAMO_TABLE
+          # --- Probes ---
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          # --- Resources (fits local minikube) ---
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
