@@ -189,40 +189,40 @@ pipeline {
                 script {
                     def trivyResult = sh(
                         script: '''
-                            python3 - <<'PY'
-        import json
-        import sys
+                python3 -c "
+                import json
+                import sys
 
-        with open("trivy-fs-report.json") as f:
-            data = json.load(f)
+                with open('trivy-fs-report.json') as f:
+                    data = json.load(f)
 
-        critical = []
+                critical = []
 
-        for result in data.get("Results", []):
-            for vuln in result.get("Vulnerabilities", []) or []:
-                if vuln.get("Severity") == "CRITICAL":
-                    critical.append(vuln)
+                for result in data.get('Results', []):
+                    for vuln in result.get('Vulnerabilities', []) or []:
+                        if vuln.get('Severity') == 'CRITICAL':
+                            critical.append(vuln)
 
-        if critical:
-            print("")
-            print("========== CRITICAL VULNERABILITIES ==========")
+                if critical:
+                    print()
+                    print('========== CRITICAL VULNERABILITIES ==========')
 
-            for vuln in critical:
-                print(
-                    "- {} | {} | {} -> {}".format(
-                        vuln.get("VulnerabilityID", "UNKNOWN"),
-                        vuln.get("PkgName", "UNKNOWN"),
-                        vuln.get("InstalledVersion", "UNKNOWN"),
-                        vuln.get("FixedVersion", "N/A")
-                    )
-                )
+                    for vuln in critical:
+                        print(
+                            '- {} | {} | {} -> {}'.format(
+                                vuln.get('VulnerabilityID', 'UNKNOWN'),
+                                vuln.get('PkgName', 'UNKNOWN'),
+                                vuln.get('InstalledVersion', 'UNKNOWN'),
+                                vuln.get('FixedVersion', 'N/A')
+                            )
+                        )
 
-            print("===============================================")
-            sys.exit(1)
+                    print('===============================================')
+                    sys.exit(1)
 
-        print("No CRITICAL vulnerabilities found.")
-        PY
-                        ''',
+                print('No CRITICAL vulnerabilities found.')
+                "
+                ''',
                         returnStatus: true
                     )
 
