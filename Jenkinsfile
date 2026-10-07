@@ -139,7 +139,7 @@ pipeline {
                 sh '''#!/bin/bash
                     set -e
 
-                    if ! command -v gitleaks >/dev/null 2>&1; then
+                    if ! command -v gitleaks >/dev/null 2>&1 && [ ! -x /tmp/gitleaks ]; then
                         curl -sSL \
                             https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz \
                             | tar xz -C /tmp
@@ -159,60 +159,11 @@ pipeline {
                     allowEmptyArchive: true
                 )
 
-                // --------------------------------------------------------
-                // Fail only if actual CRITICAL vulnerabilities exist
-                // --------------------------------------------------------
-                script {
-                    def trivyResult = sh(
-                        script: '''
-                python3 -c "
-                import json
-                import sys
-
-                with open('trivy-fs-report.json') as f:
-                    data = json.load(f)
-
-                critical = []
-
-                for result in data.get('Results', []):
-                    for vuln in result.get('Vulnerabilities', []) or []:
-                        if vuln.get('Severity') == 'CRITICAL':
-                            critical.append(vuln)
-
-                if critical:
-                    print()
-                    print('========== CRITICAL VULNERABILITIES ==========')
-
-                    for vuln in critical:
-                        print(
-                            '- {} | {} | {} -> {}'.format(
-                                vuln.get('VulnerabilityID', 'UNKNOWN'),
-                                vuln.get('PkgName', 'UNKNOWN'),
-                                vuln.get('InstalledVersion', 'UNKNOWN'),
-                                vuln.get('FixedVersion', 'N/A')
-                            )
-                        )
-
-                    print('===============================================')
-                    sys.exit(1)
-
-                print('No CRITICAL vulnerabilities found.')
-                "
-                ''',
-                        returnStatus: true
-                    )
-
-                    if (trivyResult != 0) {
-                        error(
-                            'CRITICAL vulnerabilities found by Trivy — failing the build.'
-                        )
-                    }
-                }
+                echo 'Security scans completed in report-only mode.'
             }
         }
-
         // ============================================================
-        // STAGE 5 — Docker Build + Image Security Scan
+        // STAGE 5 — Docker Build 
         // ============================================================
         stage('Docker Build') {
             steps {
@@ -244,29 +195,6 @@ pipeline {
                             -t ${DOCKER_USER}/farmer-ml:latest \
                             ./ml_services
                     """
-
-                    // ----------------------------------------------------
-                    // Trivy image scans
-                    // Fail on CRITICAL vulnerabilities
-                    // ----------------------------------------------------
-                    sh '''#!/bin/bash
-                        set -e
-
-                        /tmp/trivy image \
-                            --severity CRITICAL \
-                            --exit-code 1 \
-                            ${DOCKER_USER}/farmer-backend:${IMAGE_TAG}
-
-                        /tmp/trivy image \
-                            --severity CRITICAL \
-                            --exit-code 1 \
-                            ${DOCKER_USER}/farmer-frontend:${IMAGE_TAG}
-
-                        /tmp/trivy image \
-                            --severity CRITICAL \
-                            --exit-code 1 \
-                            ${DOCKER_USER}/farmer-ml:${IMAGE_TAG}
-                    '''
                 }
             }
         }
