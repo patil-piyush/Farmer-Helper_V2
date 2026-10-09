@@ -24,30 +24,25 @@ pipeline {
         // STAGE 2 — Build / Install
         // ============================================================
         stage('Build') {
-            parallel {
+            steps {
                 stage('Backend Install') {
-                    steps {
-                        dir('backend') {
-                            sh 'npm ci'
-                        }
+                    dir('backend') {
+                        sh 'npm ci --no-audit --no-fund'
                     }
                 }
+
                 stage('Frontend Install + Lint + Build') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm ci'
-                            // Lint — report only, never fail the build
-                            sh 'npx eslint . --format stylish > eslint-report.txt 2>&1 || true'
-                            archiveArtifacts artifacts: 'eslint-report.txt', allowEmptyArchive: true
-                            sh 'npm run build'
-                        }
+                    dir('frontend') {
+                        sh 'npm ci --no-audit --no-fund'
+                        sh 'npx eslint . --format stylish > eslint-report.txt 2>&1 || true'
+                        archiveArtifacts artifacts: 'eslint-report.txt', allowEmptyArchive: true
+                        sh 'npm run build'
                     }
                 }
+
                 stage('ML Install') {
-                    steps {
-                        dir('ml_services') {
-                            sh 'python3 -m pip install --user --quiet -r requirements-test.txt'
-                        }
+                    dir('ml_services') {
+                        sh 'python3 -m pip install --user --quiet -r requirements-test.txt'
                     }
                 }
             }
