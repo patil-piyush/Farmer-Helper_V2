@@ -25,26 +25,36 @@ pipeline {
         // ============================================================
         stage('Build') {
             steps {
-                stage('Backend Install') {
-                    dir('backend') {
-                        sh 'npm ci --no-audit --no-fund'
-                    }
+                // 1. Backend dependencies
+                echo 'Installing backend dependencies...'
+                dir('backend') {
+                    sh 'npm ci --no-audit --no-fund'
                 }
 
-                stage('Frontend Install + Lint + Build') {
-                    dir('frontend') {
-                        sh 'npm ci --no-audit --no-fund'
-                        sh 'npx eslint . --format stylish > eslint-report.txt 2>&1 || true'
-                        archiveArtifacts artifacts: 'eslint-report.txt', allowEmptyArchive: true
-                        sh 'npm run build'
-                    }
+                // 2. Frontend dependencies, lint and build
+                echo 'Installing frontend dependencies...'
+                dir('frontend') {
+                    sh 'npm ci --no-audit --no-fund'
+
+                    echo 'Running ESLint...'
+                    sh 'npx eslint . --format stylish > eslint-report.txt 2>&1 || true'
+
+                    archiveArtifacts(
+                        artifacts: 'eslint-report.txt',
+                        allowEmptyArchive: true
+                    )
+
+                    echo 'Building frontend...'
+                    sh 'npm run build'
                 }
 
-                stage('ML Install') {
-                    dir('ml_services') {
-                        sh 'python3 -m pip install --user --quiet -r requirements-test.txt'
-                    }
+                // 3. ML service dependencies
+                echo 'Installing ML test dependencies...'
+                dir('ml_services') {
+                    sh 'python3 -m pip install --user --quiet -r requirements-test.txt'
                 }
+
+                echo 'All build steps completed successfully.'
             }
         }
 
