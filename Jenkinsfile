@@ -168,18 +168,40 @@ pipeline {
             }
         }
 
+        // ============================================================
+        // PREPARE ENVIRONMENT FILES
+        // ============================================================
         stage('Prepare Environment') {
             steps {
                 sh '''
-                    set -e
+                    set -eu
+                    umask 077
 
+                    echo "Preparing application environment files..."
+
+                    # Ensure all source files exist and are non-empty
+                    test -s /home/ubuntu/app/.env
+                    test -s /home/ubuntu/app/backend/.env
+                    test -s /home/ubuntu/app/frontend/.env
+
+                    # Ensure destination directories exist
+                    mkdir -p backend frontend
+
+                    # Copy environment files into this build's workspace
+                    cp /home/ubuntu/app/.env ./.env
                     cp /home/ubuntu/app/backend/.env ./backend/.env
                     cp /home/ubuntu/app/frontend/.env ./frontend/.env
 
+                    # Restrict access to secret files
+                    chmod 600 ./.env
                     chmod 600 ./backend/.env
                     chmod 600 ./frontend/.env
 
-                    echo "Environment files prepared successfully."
+                    # Verify required AWS variables exist without printing values
+                    grep -qE '^AWS_ACCESS_KEY_ID=.+$' ./.env
+                    grep -qE '^AWS_SECRET_ACCESS_KEY=.+$' ./.env
+
+                    echo "Root, backend, and frontend environment files are ready."
                 '''
             }
         }
