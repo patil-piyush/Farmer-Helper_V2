@@ -316,13 +316,6 @@ pipeline {
                 echo '✅ All health checks passed!'
             }
         }
-
-        stage('Cleanup') {
-            steps {
-                echo 'Cleaning up dangling Docker images...'
-                sh 'docker image prune -f || true'
-            }
-        }
     }
 
     
