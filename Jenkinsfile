@@ -318,6 +318,13 @@ pipeline {
         }
     }
 
+    stage('Cleanup') {
+        steps {
+            echo 'Cleaning up dangling Docker images...'
+            sh 'docker image prune -f || true'
+        }
+    }
+
     post {
         always {
             sh 'docker logout || true'
