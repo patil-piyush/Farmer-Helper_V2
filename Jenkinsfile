@@ -313,7 +313,7 @@ pipeline {
                     sleep(time: 10, unit: 'SECONDS')
                     sh 'curl -sf http://localhost:5173'
                 }
-                echo '✅ All health checks passed!'
+                echo ' All health checks passed!'
             }
         }
     }
@@ -325,10 +325,10 @@ pipeline {
             sh 'docker logout || true'
         }
         success {
-            echo '🎉 Pipeline completed successfully — app is live!'
+            echo ' Pipeline completed successfully — app is live!'
         }
         failure {
-            echo '❌ Pipeline failed — check the logs above.'
+            echo ' Pipeline failed — check the logs above.'
         }
     }
 }
